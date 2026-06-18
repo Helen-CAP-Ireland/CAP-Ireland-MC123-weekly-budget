@@ -1,7 +1,7 @@
 {
   "name": "CAP Ireland Weekly Budget",
   "short_name": "CAP Weekly",
-  "start_url": "./index.html",
+  "start_url": "/CAP-Ireland-MC123-weekly-budget/",
   "display": "standalone",
   "background_color": "#f4f7f6",
   "theme_color": "#141464",
