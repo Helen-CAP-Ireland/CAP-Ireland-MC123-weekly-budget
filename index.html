@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CAP Ireland Weekly Budget Planner.">
+<title>CAP Ireland Weekly Budget Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+
+<!-- True PWA Linking Infrastructure -->
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CAP Weekly">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cap-green: #45A929;
+    --cap-navy: #141464;
+    --cap-orange: #FF450F;
+    
+    /* Allocation Category Visual Colors */
+    --wk-col: #0069BF; 
+    --wk-bg: #e0f0fc;
+    --reg-col: #45A929; 
+    --reg-bg: #e6f6e1;
+    --sav-col: #BF0078;  
+    --sav-bg: #fdf0f7;
+    
+    --bg: #f4f7f6;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --border: #cbd5e1;
+    --border2: #e2e8f0;
+    --text: #141464;
+    --text2: #475569;
+    --text3: #94a3b8;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  html { font-size: 15px; }
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+
+  .app { 
+    max-width: 660px; 
+    margin: 0 auto; 
+    padding-bottom: 3rem;
+    background: #ffffff;
+    border-radius: 24px;
+    border: 4px solid var(--cap-green); 
+    box-shadow: 0 16px 48px rgba(20, 20, 100, 0.08);
+    overflow: hidden;
+  }
+
+  .app-content { padding: 24px; }
+
+  /* Clear PWA Mobile Instructions Styling Card */
+  .pwa-prompt {
+    background: linear-gradient(135deg, #1e1e82, var(--cap-navy));
+    color: white;
+    padding: 16px;
+    margin: 12px 24px 0 24px;
+    border-radius: var(--radius-sm);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(20,20,100,0.15);
+  }
+  .pwa-text { font-size: 13px; font-weight: 700; line-height: 1.5; width: 100%; }
+
+  /* Plain Text Privacy Notice Style */
+  .privacy-notice-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text2);
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    padding: 2px 4px;
+  }
+
+  .header {
+    background: var(--cap-navy); 
+    color: white;
+    padding: 24px 32px;
+    display: flex; 
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+  }
+  
+  .header-title { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+  .header-sub { font-size: 14px; color: var(--cap-green); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Summary Metrics Engine Grid Layout */
+  .summary-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .summary-bottom { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.5rem; }
+  
+  .s-card {
+    background: #f8fafc; 
+    border-radius: var(--radius-sm);
+    padding: 14px; 
+    border: 1px solid var(--border2);
+  }
+  .s-card.wk  { background: var(--wk-bg);  border-top: 4px solid var(--wk-col); }
+  .s-card.reg { background: var(--reg-bg); border-top: 4px solid var(--reg-col); }
+  .s-card.sav { background: var(--sav-bg); border-top: 4px solid var(--sav-col); }
+  
+  .s-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .s-card.wk  .s-label { color: var(--wk-col); }
+  .s-card.reg .s-label { color: var(--reg-col); }
+  .s-card.sav .s-label { color: var(--sav-col); }
+  
+  .s-value { font-size: 20px; font-weight: 900; color: var(--cap-navy); }
+  .s-unit { font-size: 12px; font-weight: 400; }
+  .s-subtitle { font-size: 11px; font-weight: 700; color: var(--text2); margin-top: 4px; font-style: italic; }
+  
+  /* Budget Balancing Color Rule Engine Sets */
+  .bal-balanced { background: #e6f6e1; border: 2px solid var(--cap-green); }
+  .bal-unallocated { background: #fffbeb; border: 2px solid #f59e0b; }
+  .bal-overspent { background: #fdf0f7; border: 2px solid #BF0078; }
+
+  /* Navigation Panels Tabs */
+  .section-tabs {
+    display: flex; 
+    gap: 6px; 
+    margin-bottom: 1.25rem;
+    background: #f1f5f9; 
+    border-radius: var(--radius-sm);
+    padding: 6px; 
+  }
+  .stab {
+    flex: 1; 
+    padding: 10px 4px; 
+    text-align: center;
+    font-size: 14px; 
+    font-weight: 700; 
+    border: none;
+    background: transparent; 
+    cursor: pointer; 
+    border-radius: 8px;
+    color: var(--text2); 
+    font-family: inherit; 
+  }
+  .stab.active { background: var(--cap-navy); color: white; }
+
+  /* Container Cards Blocks */
+  .cat-section {
+    margin-bottom: 1rem; 
+    border: 2px solid var(--border2);
+    border-radius: var(--radius-sm); 
+    overflow: hidden;
+  }
+  .cat-header {
+    background: var(--cap-navy); 
+    padding: 12px 16px;
+    font-size: 14px; 
+    font-weight: 700; 
+    color: white;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    cursor: pointer; 
+  }
+  .cat-body { display: block; background: #f8fafc; } 
+  .cat-body.collapsed { display: none; }
+
+  /* Content Input Rows */
+  .exp-row { 
+    padding: 14px; 
+    border-bottom: 1px solid var(--border2); 
+    background: #ffffff; 
+    margin: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e2e8f0;
+  }
+  .exp-row-top {
+    display: grid; 
+    grid-template-columns: 1fr 95px 125px;
+    gap: 10px; 
+    align-items: center; 
+    margin-bottom: 10px;
+  }
+  .exp-row-label { font-size: 14px; font-weight: 700; color: var(--text); }
+  .exp-row-bottom { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .weekly-calc-label { font-size: 12px; color: var(--text3); }
+  .weekly-calc-label strong { color: var(--cap-navy); font-weight: 700; }
+
+  /* Custom Input Dynamic Rows */
+  .custom-label-input {
+    width: 100%; font-size: 14px; font-weight: 700; color: var(--text);
+    border: none; border-bottom: 2px dashed var(--border);
+    background: transparent; font-family: inherit;
+    padding: 2px 4px; outline: none;
+  }
+  .custom-label-input:focus { border-bottom-color: var(--cap-orange); }
+
+  /* Allocation Selection Layout Pills */
+  .alloc-toggle { display: flex; gap: 6px; }
+  .alloc-btn {
+    padding: 6px 14px; 
+    font-size: 11px; 
+    font-weight: 700;
+    border-radius: 20px; 
+    cursor: pointer; 
+    font-family: inherit;
+    background: #f1f5f9; 
+    color: var(--text2);
+    border: 2px solid var(--border2);
+  }
+  .alloc-btn.sel-weekly  { background: var(--wk-col);  color: white; border-color: var(--wk-col); }
+  .alloc-btn.sel-regular { background: var(--reg-col); color: white; border-color: var(--reg-col); }
+  .alloc-btn.sel-savings { background: var(--sav-col); color: white; border-color: var(--sav-col); }
+
+  /* Input Fields */
+  .income-row {
+    display: grid; 
+    grid-template-columns: 1fr 95px 125px;
+    align-items: center; 
+    gap: 10px; 
+    padding: 14px;
+    background: #ffffff;
+    margin: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e2e8f0;
+  }
+
+  input[type=number] {
+    width: 100%; padding: 6px 10px; font-size: 14px; font-weight: 700; text-align: right;
+    border: 2px solid var(--border2); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); font-family: inherit;
+  }
+  input[type=number]:focus { outline: none; border-color: var(--cap-orange); }
+
+  select {
+    width: 100%; padding: 6px; font-size: 13px; font-weight: 700;
+    border: 2px solid var(--border2); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer;
+  }
+
+  .export-btn {
+    width: 100%; padding: 14px; background: var(--cap-green); color: white;
+    border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit; margin-top: 1rem;
+  }
+  .clear-btn {
+    width: 100%; padding: 10px; background: transparent;
+    border: 2px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px;
+    font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 0.5rem; color: var(--text2);
+  }
+
+  @media (max-width: 480px) {
+    .exp-row-top { grid-template-columns: 1fr 80px 110px; gap: 6px; }
+    .income-row { grid-template-columns: 1fr 80px 110px; gap: 6px; }
+    .summary-bottom { gap: 8px; }
+    .s-value { font-size: 15px; }
+    .alloc-btn { padding: 6px 10px; font-size: 10px; }
+    .pwa-prompt { margin: 12px 12px 0 12px; padding: 12px; }
+    .pwa-text { font-size: 12px; }
+    .privacy-notice-text { font-size: 11px; margin-bottom: 1rem; }
+    .header { padding: 20px 24px; }
+    .header-title { font-size: 21px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Add to Phone Mobile Directive Bar -->
+  <div class="pwa-prompt" id="pwa-card">
+    <div class="pwa-text" id="pwa-instructions">📱 Save App to Phone</div>
+  </div>
+
+  <div class="header">
+    <div class="header-title">Weekly Budget Planner</div>
+    <div class="header-sub">Christians Against Poverty Ireland</div>
+  </div>
+
+  <div class="app-content">
+
+    <!-- Reassuring Privacy Text -->
+    <div class="privacy-notice-text">
+      🔒 <strong>Your Privacy:</strong> Everything you type stays entirely on your own phone or device. Your numbers are private to you—we never see them, collect them, or save them anywhere else.
+    </div>
+
+    <!-- Master Dashboard Controls -->
+    <div class="summary-top">
+      <div class="s-card">
+        <div class="s-label">Weekly Income</div>
+        <div class="s-value" id="sum-inc" style="color: var(--cap-green);">€0<span class="s-unit">/wk</span></div>
+      </div>
+      <div class="s-card" id="bal-card">
+        <div class="s-label" id="bal-label">Still Left to Plan</div>
+        <div class="s-value" id="sum-bal">€0<span class="s-unit">/wk</span></div>
+      </div>
+    </div>
+    
+    <!-- Action Cards -->
+    <div class="summary-bottom">
+      <div class="s-card wk">
+        <div class="s-label">Weekly Spending</div>
+        <div class="s-value c-wk" id="sum-wk" style="color: var(--wk-col);">€0<span class="s-unit">/wk</span></div>
+        <div class="s-subtitle">🛒 Control your spending</div>
+      </div>
+      <div class="s-card reg">
+        <div class="s-label">Regular Payments</div>
+        <div class="s-value c-reg" id="sum-reg" style="color: var(--reg-col);">€0<span class="s-unit">/wk</span></div>
+        <div class="s-subtitle">🛡️ Protect your bills</div>
+      </div>
+      <div class="s-card sav">
+        <div class="s-label">Savings Items</div>
+        <div class="s-value c-sav" id="sum-sav" style="color: var(--sav-col);">€0<span class="s-unit">/wk</span></div>
+        <div class="s-subtitle">🚀 Prepare for your future</div>
+      </div>
+    </div>
+
+    <div class="section-tabs">
+      <button class="stab active" onclick="showPanel('income')">💶 Money Coming In</button>
+      <button class="stab" onclick="showPanel('expenses')">🧾 Money Going Out</button>
+    </div>
+
+    <div id="panel-income">
+      <div id="income-container"></div>
+    </div>
+
+    <div id="panel-expenses" style="display:none">
+      <div id="expense-container"></div>
+    </div>
+
+    <button class="export-btn" onclick="window.print()">🖨️ &nbsp;Print Weekly Summary</button>
+    <button class="clear-btn" onclick="clearData()">🗑️ &nbsp;Clear Figures & Start Again</button>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'cap_weekly_pwa_v5_prod';
+
+// 1. Linking Outside Service Worker File directly
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW engine setup bypassed'));
+}
+
+// 2. Adaptive OS System Detector & Instruction Layout Handler
+const pwaCard = document.getElementById('pwa-card');
+const pwaTxt = document.getElementById('pwa-instructions');
+
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+window.addEventListener('DOMContentLoaded', () => {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (!isStandalone && isMobile) {
+    pwaCard.style.display = 'block';
+    if (isIOS) {
+      pwaTxt.innerHTML = '📱 <strong>Add App to Phone:</strong><br>Tap the Safari <strong>Share button (↑)</strong> below, then select <strong>"Add to Home Screen"</strong>.';
+    } else {
+      pwaTxt.innerHTML = '📱 <strong>Add App to Phone:</strong><br>Tap the Chrome <strong>Menu dots (⋮)</strong> in the top corner of your screen, then select <strong>"Add to Home screen"</strong> (or <strong>"Install app"</strong>).';
+    }
+  }
+});
+
+const FREQS = [
+  { label: 'Weekly',      value: 'weekly',      mult: 1 },
+  { label: 'Fortnightly', value: 'fortnightly',  mult: 0.5 },
+  { label: 'Monthly',     value: 'monthly',      mult: 12/52 },
+  { label: 'Quarterly',   value: 'quarterly',    mult: 4/52 },
+  { label: 'Annually',    value: 'annually',     mult: 1/52 },
+];
+
+const incomeData = [
+  { label: 'Money Coming In', items: [
+    { id: 'w_job',         label: 'Weekly Wages / Salary' },
+    { id: 'w_sw',          label: 'Social Welfare Payments' },
+    { id: 'w_childben',    label: 'Child Benefit' },
+    { id: 'w_inc_c1',      label: '', custom: true }
+  ]}
+];
+
+const expenseData = [
+  { label: '🏠 Housing Costs', items: [
+    { id: 'w_rent',       label: 'Rent / Mortgage' },
+    { id: 'w_topup',      label: 'Rent Top Up' },
+    { id: 'w_house_c1',   label: '', custom: true },
+    { id: 'w_house_c2',   label: '', custom: true }
+  ]},
+  { label: '⚡ Utilities', items: [
+    { id: 'w_elec',       label: 'Electricity' },
+    { id: 'w_gas_piped',  label: 'Gas (Piped/Mains)' },
+    { id: 'w_heating_oil',label: 'Heating Oil / Fuel' },
+    { id: 'w_bins',       label: 'Bin Charges' },
+    { id: 'w_phone',      label: 'Mobiles / Phone' },
+    { id: 'w_broadband',  label: 'Broadband / Internet' },
+    { id: 'w_tvlic',      label: 'TV Licence' },
+    { id: 'w_util_c1',    label: '', custom: true },
+    { id: 'w_util_c2',    label: '', custom: true }
+  ]},
+  { label: '🛒 Living Costs', items: [
+    { id: 'w_groceries',  label: 'Groceries & Food' },
+    { id: 'w_schoolmeals',label: 'School Meals' },
+    { id: 'w_mealswork',  label: 'Meals at Work' },
+    { id: 'w_laundry',    label: 'Laundry / Dry Cleaning' },
+    { id: 'w_living_c1',  label: '', custom: true },
+    { id: 'w_living_c2',  label: '', custom: true }
+  ]},
+  { label: '🚗 Transport', items: [
+    { id: 'w_carins',     label: 'Car Insurance' },
+    { id: 'w_motortax',   label: 'Motor Tax' },
+    { id: 'w_fuel',       label: 'Petrol / Diesel' },
+    { id: 'w_nct_costs',  label: 'NCT / Repairs' },
+    { id: 'w_public_t',   label: 'Public Transport / Taxis' },
+    { id: 'w_tax_c1',     label: '', custom: true },
+    { id: 'w_tax_c2',     label: '', custom: true }
+  ]},
+  { label: '👨‍👩‍👧‍👦 Personal & Family', items: [
+    { id: 'w_clothing',   label: 'Clothing & Footwear' },
+    { id: 'w_hairdressing',label: 'Hairdressing / Grooming' },
+    { id: 'w_pocket',     label: 'Pocket Money' },
+    { id: 'w_childcare',  label: 'Childcare / Creche' },
+    { id: 'w_school_costs',label: 'School Uniforms / Trips' },
+    { id: 'w_health',     label: 'Medicines / Prescriptions' },
+    { id: 'w_pets',       label: 'Pet Food / Vet Bills' },
+    { id: 'w_fam_c1',     label: '', custom: true },
+    { id: 'w_fam_c2',     label: '', custom: true }
+  ]},
+  { label: '🎨 Leisure', items: [
+    { id: 'w_church',     label: 'Church Giving / Charity' },
+    { id: 'w_hols',       label: 'Holidays / Days Out' },
+    { id: 'w_entertainment',label: 'Socialising / Hobbies' },
+    { id: 'w_cigarettes', label: 'Cigarettes / Tobacco' },
+    { id: 'w_gifts',      label: 'Birthdays & Christmas' },
+    { id: 'w_leisure_c1', label: '', custom: true },
+    { id: 'w_leisure_c2', label: '', custom: true }
+  ]}
+];
+
+let state = {};
+const collapsed = {};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) state = JSON.parse(saved);
+  } catch(e) { state = {}; }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function clearData() {
+  if (!confirm('Clear all figures?')) return;
+  state = {};
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  document.querySelectorAll('input[type=number]').forEach(el => el.value = '');
+  document.querySelectorAll('select').forEach(el => el.value = 'weekly');
+  document.querySelectorAll('.custom-label-input').forEach(el => el.value = '');
+  recalc();
+}
+
+function toWeekly(id) {
+  const amt = parseFloat(state[id+'_amt']) || 0;
+  const freq = state[id+'_freq'] || 'weekly';
+  const mult = FREQS.find(f => f.value === freq)?.mult || 1;
+  return amt * mult;
+}
+
+function fmt(n) { return '€' + Math.round(Math.abs(n)).toLocaleString('en-IE'); }
+
+function recalc() {
+  let totalInc = 0;
+  incomeData.forEach(s => s.items.forEach(it => totalInc += toWeekly(it.id)));
+
+  let wkWk = 0, regWk = 0, savWk = 0;
+  expenseData.forEach(s => s.items.forEach(it => {
+    const alloc = state[it.id+'_alloc'] || 'weekly';
+    const wk = toWeekly(it.id);
+    if (alloc === 'weekly')       wkWk += wk;
+    else if (alloc === 'regular') regWk += wk;
+    else                          savWk += wk;
+  }));
+
+  const totalAllocated = wkWk + regWk + savWk;
+  const bal = totalInc - totalAllocated;
+
+  document.getElementById('sum-inc').innerHTML = fmt(totalInc)+'<span class="s-unit">/wk</span>';
+  document.getElementById('sum-wk').innerHTML = fmt(wkWk)+'<span class="s-unit">/wk</span>';
+  document.getElementById('sum-reg').innerHTML = fmt(regWk)+'<span class="s-unit">/wk</span>';
+  document.getElementById('sum-sav').innerHTML = fmt(savWk)+'<span class="s-unit">/wk</span>';
+
+  const balEl = document.getElementById('sum-bal');
+  const cardEl = document.getElementById('bal-card');
+  const lblEl = document.getElementById('bal-label');
+
+  if (Math.abs(bal) < 0.5 && totalInc > 0) {
+    balEl.innerHTML = 'Balanced! ✓';
+    lblEl.textContent = 'Budget Status';
+    cardEl.className = 's-card bal-balanced';
+  } else if (bal < 0) {
+    balEl.innerHTML = 'Short by ' + fmt(bal) + '<span class="s-unit">/wk</span>';
+    lblEl.textContent = 'Needs Adjusting';
+    cardEl.className = 's-card bal-overspent';
+  } else {
+    balEl.innerHTML = fmt(bal) + '<span class="s-unit">/wk</span>';
+    lblEl.textContent = 'Still Left to Plan';
+    cardEl.className = 's-card bal-unallocated';
+  }
+
+  document.querySelectorAll('[data-wk-lbl]').forEach(el => {
+    const w = toWeekly(el.dataset.wkLbl);
+    el.innerHTML = w > 0 ? 'Weekly share: <strong>'+fmt(w)+'</strong>/wk' : '';
+  });
+}
+
+function setAlloc(id, alloc) {
+  state[id+'_alloc'] = alloc;
+  document.querySelectorAll('#alloc-'+id+' .alloc-btn').forEach(b => {
+    b.className = 'alloc-btn' + (b.dataset.alloc===alloc ? ' sel-'+alloc : '');
+  });
+  recalc();
+  saveState();
+}
+
+function buildIncome() {
+  const c = document.getElementById('income-container');
+  incomeData.forEach((sec,idx) => {
+    const div = document.createElement('div');
+    div.className = 'cat-section';
+    div.innerHTML = `
+      <div class="cat-header"><span>${sec.label}</span></div>
+      <div class="cat-body" id="body-inc-${idx}">
+        ${sec.items.map(it=>{
+          const labelCell = it.custom
+            ? `<input class="custom-label-input" type="text" placeholder="Add custom item…" value="${state[it.id+'_label']||''}" oninput="state['${it.id}_label']=this.value;saveState()">`
+            : `<div class="row-label" style="font-size: 14px; font-weight: 700; color: var(--text);">${it.label}</div>`;
+          return `
+          <div class="income-row">
+            ${labelCell}
+            <input type="number" min="0" placeholder="0" inputmode="decimal"
+              value="${state[it.id+'_amt']||''}"
+              oninput="state['${it.id}_amt']=this.value;recalc();saveState()">
+            <select onchange="state['${it.id}_freq']=this.value;recalc();saveState()">
+              ${FREQS.map(f=>`<option value="${f.value}"${(state[it.id+'_freq']||'weekly')===f.value?' selected':''}>${f.label}</option>`).join('')}
+            </select>
+          </div>`;
+        }).join('')}
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+function buildExpenses() {
+  const c = document.getElementById('expense-container');
+  expenseData.forEach((sec,idx) => {
+    const key = 'exp-'+idx;
+    const div = document.createElement('div');
+    div.className = 'cat-section';
+    div.innerHTML = `
+      <div class="cat-header" onclick="toggleSec('${key}')">
+        <span>${sec.label}</span>
+        <span id="tog-${key}">▾</span>
+      </div>
+      <div class="cat-body" id="body-${key}">
+        ${sec.items.map(it => {
+          const labelCell = it.custom
+            ? `<input class="custom-label-input" type="text" placeholder="Add custom item…" value="${state[it.id+'_label']||''}" oninput="state['${it.id}_label']=this.value;saveState()">`
+            : `<div class="exp-row-label">${it.label}</div>`;
+          const cur = state[it.id+'_alloc'] || 'weekly';
+          return `
+          <div class="exp-row">
+            <div class="exp-row-top">
+              ${labelCell}
+              <input type="number" min="0" placeholder="0" inputmode="decimal" value="${state[it.id+'_amt']||''}" oninput="state['${it.id}_amt']=this.value;recalc();saveState()">
+              <select onchange="state['${it.id}_freq']=this.value;recalc();saveState()">
+                ${FREQS.map(f=>`<option value="${f.value}"${(state[it.id+'_freq']||'weekly')===f.value?' selected':''}>${f.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="exp-row-bottom">
+              <div class="weekly-calc-label" data-wk-lbl="${it.id}"></div>
+              <div class="alloc-toggle" id="alloc-${it.id}">
+                <button class="alloc-btn${cur==='weekly'?' sel-weekly':''}" data-alloc="weekly" onclick="setAlloc('${it.id}','weekly')">Weekly</button>
+                <button class="alloc-btn${cur==='regular'?' sel-regular':''}" data-alloc="regular" onclick="setAlloc('${it.id}','regular')">Regular</button>
+                <button class="alloc-btn${cur==='savings'?' sel-savings':''}" data-alloc="savings" onclick="setAlloc('${it.id}','savings')">Savings</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+function toggleSec(key) {
+  collapsed[key] = !collapsed[key];
+  document.getElementById('body-'+key).className = 'cat-body'+(collapsed[key]?' collapsed':'');
+  document.getElementById('tog-'+key).textContent = collapsed[key]?'▸':'▾';
+}
+
+function showPanel(panel) {
+  ['income','expenses'].forEach(p => document.getElementById('panel-'+p).style.display = p===panel?'':'none');
+  document.querySelectorAll('.stab').forEach((el,i) => el.className = 'stab'+((['income','expenses'][i])===panel?' active':''));
+}
+
+loadState();
+buildIncome();
+buildExpenses();
+recalc();
+</script>
+</body>
+</html>
